@@ -7,6 +7,11 @@ const PORT = process.env.PORT || 3000;
 // Serve static assets from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Secure Login Route
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
 // Fallback route for single page navigation or 404
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

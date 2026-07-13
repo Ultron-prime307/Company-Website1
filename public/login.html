@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Meta Tags -->
+  <title>ULTRON // Secure Console Login</title>
+  <meta name="description" content="Secure telemetry uplink login console for Ultron autonomous system networks. Log in to establish connection vectors and manage drone mesh settings.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* -------------------------------------------------------------
+       1. THEME VARIABLES & BASICS
+       ------------------------------------------------------------- */
+    :root {
+      --bg: #0A0D12;
+      --panel: #12161D;
+      --panel-2: #171D26;
+      --line: #232B37;
+      --line-bright: #384556;
+      --text: #E7EAEE;
+      --muted: #8993A1;
+      --accent: #FF6A39;
+      --accent-glow: rgba(255, 106, 57, 0.15);
+      --cyan: #4FD1C5;
+      --cyan-glow: rgba(79, 209, 197, 0.2);
+      
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-fast: all 0.2s ease;
+    }
+
+    body.light-theme {
+      --bg: #F4F6F9;
+      --panel: #FFFFFF;
+      --panel-2: #EDF1F6;
+      --line: #D0D7DE;
+      --line-bright: #AFB8C1;
+      --text: #0F141C;
+      --muted: #57606A;
+      --accent: #FF5A23;
+      --accent-glow: rgba(255, 90, 35, 0.12);
+      --cyan: #14B8A6;
+      --cyan-glow: rgba(20, 184, 166, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 50% 30%, var(--cyan-glow) 0%, transparent 65%),
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 100% 100%, 50px 50px, 50px 50px;
+      background-position: center;
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    /* Focus highlight */
+    *:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 4px;
+    }
+
+    /* -------------------------------------------------------------
+       2. LAYOUT STYLING
+       ------------------------------------------------------------- */
+    header.nav-header {
+      width: 100%;
+      height: 80px;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      background: rgba(var(--bg), 0.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .logo svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--accent);
+      filter: drop-shadow(0 0 4px var(--accent-glow));
+    }
+
+    .logo-text span {
+      color: var(--cyan);
+    }
+
+    .theme-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--cyan);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      text-transform: uppercase;
+    }
+
+    .theme-toggle-btn:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan-glow);
+      color: var(--text);
+    }
+
+    /* Central Login Frame */
+    .login-wrapper {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      z-index: 2;
+    }
+
+    .login-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+      padding: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition-smooth);
+    }
+
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--cyan) 100%);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-title-prefix {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .login-title {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    /* Forms */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
+    .form-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper span.bracket-prefix {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--line-bright);
+      margin-right: 0.4rem;
+      user-select: none;
+    }
+
+    .form-input {
+      background: rgba(10, 13, 18, 0.45);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+      transition: var(--transition-fast);
+      caret-color: var(--cyan);
+    }
+
+    .form-input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan-glow);
+      background: rgba(10, 13, 18, 0.7);
+    }
+
+    .form-input::placeholder {
+      color: rgba(137, 147, 161, 0.35);
+    }
+
+    /* -------------------------------------------------------------
+       3. BIOMETRIC SCAN PAD WIDGET
+       ------------------------------------------------------------- */
+    .biometric-container {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      position: relative;
+    }
+
+    .scan-pad-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 4px;
+      border: 1px solid var(--line-bright);
+      background: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      color: var(--cyan);
+      transition: var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .scan-pad-btn svg {
+      width: 32px;
+      height: 32px;
+      fill: currentColor;
+    }
+
+    .scan-pad-btn:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    /* Scanning Laser Line Overlay */
+    .scan-laser {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* active scanner sweep */
+    .scan-pad-btn.scanning .scan-laser {
+      opacity: 1;
+      animation: laser-sweep 2.0s infinite ease-in-out;
+    }
+
+    .scan-pad-btn.scanning {
+      color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    .scan-pad-btn.success-auth {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      box-shadow: 0 0 15px var(--cyan-glow);
+      background: rgba(20, 184, 166, 0.05);
+    }
+
+    @keyframes laser-sweep {
+      0% { top: 0%; }
+      50% { top: 100%; }
+      100% { top: 0%; }
+    }
+
+    .biometric-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .bio-title {
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .bio-status-text {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .bio-status-text.status-authorized {
+      color: var(--cyan);
+      font-weight: bold;
+    }
+
+    /* -------------------------------------------------------------
+       4. CONSOLE RELAY LOGS WIDGET
+       ------------------------------------------------------------- */
+    .console-relay-panel {
+      background: rgba(10, 13, 18, 0.85);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      max-height: 100px;
+      overflow-y: auto;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .console-relay-line {
+      line-height: 1.4;
+    }
+
+    .console-relay-line.info-log { color: var(--muted); }
+    .console-relay-line.warn-log { color: var(--accent); }
+    .console-relay-line.success-log { color: var(--cyan); }
+
+    /* Buttons */
+    .btn-submit {
+      width: 100%;
+      padding: 1rem;
+      font-size: 0.85rem;
+      background: var(--accent);
+      color: #FFF;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      box-shadow: 0 4px 20px var(--accent-glow);
+      transition: var(--transition-smooth);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(255, 106, 57, 0.3);
+      background: #ff7c4f;
+    }
+
+    .btn-submit:disabled {
+      background: var(--line);
+      color: var(--muted);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Utilities */
+    .back-home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 1.5rem;
+      align-self: center;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: var(--transition-fast);
+    }
+
+    .back-home-link:hover {
+      color: var(--cyan);
+    }
+
+    .back-home-link svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+
+    /* -------------------------------------------------------------
+       5. REDUCED MOTION SUPPORT
+       ------------------------------------------------------------- */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-delay: 0s !important;
+        animation-duration: 0.05s !important;
+        animation-iteration-count: 1 !important;
+        transition-delay: 0s !important;
+        transition-duration: 0.05s !important;
+      }
+      
+      .scan-laser {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="dark-theme">
+
+  <!-- ---------------------------------------------------------------
+       HEADER
+       --------------------------------------------------------------- -->
+  <header class="nav-header">
+    <a href="/" class="logo" aria-label="Ultron Autonomous Systems Home">
+      <svg viewBox="0 0 24 24">
+        <polygon points="12,2 22,7 22,17 12,22 2,17 2,7" fill="none" stroke="currentColor" stroke-width="2" />
+        <polygon points="12,6 18,9 18,15 12,18 6,15 6,9" fill="currentColor" opacity="0.8" />
+      </svg>
+      <span class="logo-text">ULTRON<span>.</span></span>
+    </a>
+    
+    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
+      [ SYSTEM: <span id="theme-label">DARK</span> ]
+    </button>
+  </header>
+
+  <!-- ---------------------------------------------------------------
+       LOGIN FORM WRAPPER
+       --------------------------------------------------------------- -->
+  <div class="login-wrapper">
+    <main class="login-card">
+      <div class="login-header">
+        <span class="login-title-prefix">CONSOLE UPLINK SECURE ACCESS</span>
+        <h1 class="login-title">Control Portal</h1>
+      </div>
+
+      <!-- Credentials Form -->
+      <form id="login-form" onsubmit="return false;">
+        <div class="form-group">
+          <label for="node-key" class="form-label">NODE KEY IDENTIFIER</label>
+          <div class="input-wrapper">
+            <span class="bracket-prefix">[</span>
+            <input type="text" id="node-key" class="form-input" placeholder="NODE-N37" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+          <label for="auth-token" class="form-label">AUTHORIZATION TOKEN</label>
+          <div class="input-wrapper">
+            <span class="bracket-prefix">[</span>
+            <input type="password" id="auth-token" class="form-input" placeholder="••••••••••••••" required autocomplete="current-password">
+          </div>
+        </div>
+
+        <!-- Biometric verification scan pad -->
+        <div class="biometric-container">
+          <button type="button" id="scan-pad" class="scan-pad-btn" aria-label="Verify biometrics fingerprint scan">
+            <!-- Fingerprint SVG Icon -->
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.93c-3.13-.26-5.59-2.92-5.59-6.08 0-1.66 1.34-3 3-3s3 1.34 3 3c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5c0 1.66-1.34 3-3 3s-3-1.34-3-3c0-3.31 2.69-6 6-6s6 2.69 6 6-2.69 6-6 6c-.34 0-.67-.03-1-.07v-1.93zm0-3.93c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1z"/>
+            </svg>
+            <div class="scan-laser" id="scan-laser"></div>
+          </button>
+          <div class="biometric-info">
+            <span class="bio-title">BIOMETRIC AUTHENTICATOR</span>
+            <span id="bio-status" class="bio-status-text">RETINAL / SCAN REQUIRED</span>
+          </div>
+        </div>
+
+        <!-- Terminal log outputs -->
+        <div class="console-relay-panel" id="console-logs-display" aria-live="polite">
+          <!-- Boot logs will populate dynamically -->
+        </div>
+
+        <!-- Submit Connect Link -->
+        <button type="submit" id="btn-submit" class="btn-submit" disabled>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:middle;">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          ESTABLISH SECURE CONNECT LINK
+        </button>
+      </form>
+
+      <!-- Return back links -->
+      <a href="/" class="back-home-link">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+        Return to Swarm Center
+      </a>
+    </main>
+  </div>
+
+  <!-- ---------------------------------------------------------------
+       CLIENT SCRIPT
+       --------------------------------------------------------------- -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      
+      /* ==========================================
+         1. PERSISTENT THEME CONTROL
+         ========================================== */
+      let activeTheme = localStorage.getItem("ultron-theme") || "dark";
+      const themeToggleBtn = document.getElementById("theme-toggle");
+      const themeLabel = document.getElementById("theme-label");
+
+      function applyTheme(theme) {
+        if (theme === "light") {
+          document.body.className = "light-theme";
+          if (themeLabel) themeLabel.textContent = "LIGHT";
+        } else {
+          document.body.className = "dark-theme";
+          if (themeLabel) themeLabel.textContent = "DARK";
+        }
+      }
+      applyTheme(activeTheme);
+
+      if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", () => {
+          activeTheme = activeTheme === "dark" ? "light" : "dark";
+          localStorage.setItem("ultron-theme", activeTheme);
+          applyTheme(activeTheme);
+          logRelay(">> THEME CONFIG: CHANGED STATE TO " + activeTheme.toUpperCase(), "warn-log");
+        });
+      }
+
+      /* ==========================================
+         2. TERMINAL DIALOG RELAY
+         ========================================== */
+      const logsDisplay = document.getElementById("console-logs-display");
+
+      function logRelay(text, type = "info-log") {
+        if (!logsDisplay) return;
+        const line = document.createElement("div");
+        line.className = `console-relay-line ${type}`;
+        line.textContent = `[${new Date().toISOString().substring(11, 19)}] ${text}`;
+        logsDisplay.appendChild(line);
+        logsDisplay.scrollTop = logsDisplay.scrollHeight;
+      }
+
+      // Initial diagnostics boot logs
+      setTimeout(() => logRelay("ESTABLISHING SYSTEM PORT CONSTRAINTS...", "info-log"), 300);
+      setTimeout(() => logRelay("WARNING: MESH HANDSHAKE REQUIRED FOR MONITOR PRIVILEGES.", "warn-log"), 800);
+      setTimeout(() => logRelay("CONSOLE HANDSHAKE: STANDBY.", "info-log"), 1400);
+
+      /* ==========================================
+         3. BIOMETRIC RETINAL / FINGERPRINT SCAN
+         ========================================== */
+      const scanPad = document.getElementById("scan-pad");
+      const bioStatus = document.getElementById("bio-status");
+      const btnSubmit = document.getElementById("btn-submit");
+      
+      let biometricsPassed = false;
+
+      if (scanPad && bioStatus) {
+        scanPad.addEventListener("click", () => {
+          if (biometricsPassed) return; // already scanned
+
+          scanPad.classList.add("scanning");
+          bioStatus.textContent = "SCANNING BIOMETRIC ARRAY...";
+          logRelay("INITIALIZING Retinal & Biometric analysis...", "info-log");
+
+          // Simulate scanning process
+          setTimeout(() => {
+            scanPad.classList.remove("scanning");
+            scanPad.classList.add("success-auth");
+            biometricsPassed = true;
+            bioStatus.textContent = "KEY VERIFIED // ACCESS MATCH";
+            bioStatus.classList.add("status-authorized");
+            
+            logRelay("SUCCESS: Biometric patterns aligned. Token payload locked.", "success-log");
+            
+            // Enable submit button
+            if (btnSubmit) btnSubmit.disabled = false;
+          }, 2000);
+        });
+      }
+
+      /* ==========================================
+         4. SECURE FORM SUBMIT & MOCK AUTH
+         ========================================== */
+      const loginForm = document.getElementById("login-form");
+      const nodeKeyInput = document.getElementById("node-key");
+      const tokenInput = document.getElementById("auth-token");
+
+      if (loginForm) {
+        loginForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          if (!biometricsPassed) {
+            logRelay("ERR: Biometric access confirmation required.", "warn-log");
+            return;
+          }
+
+          const nodeKey = nodeKeyInput.value.trim();
+          const authToken = tokenInput.value.trim();
+
+          logRelay(`AUTHENTICATING '${nodeKey}' AT LOCAL ENVELOPE...`, "info-log");
+          btnSubmit.disabled = true;
+
+          setTimeout(() => {
+            logRelay("HANDSHAKE EXCHANGED. COMPILING KEY MATCH...", "info-log");
+
+            setTimeout(() => {
+              logRelay("SUCCESS: AUTH VECTOR APPROVED. ESTABLISHING CONSOLE UPLINK...", "success-log");
+              
+              setTimeout(() => {
+                logRelay("Mesh socket connected. Transferring...", "success-log");
+                
+                // Redirect back to home dashboard
+                setTimeout(() => {
+                  window.location.href = "/";
+                }, 1000);
+
+              }, 800);
+            }, 1000);
+          }, 1200);
+        });
+      }
+
+    });
+  </script>
+</body>
+</html>

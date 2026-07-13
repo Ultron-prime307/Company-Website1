@@ -3,11 +3,22 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =================================================================
      1. STATE MANAGEMENT & GLOBALS
      ================================================================= */
-  let currentTheme = "dark";
+  let currentTheme = localStorage.getItem("ultron-theme") || "dark";
   const body = document.body;
   const themeToggleBtn = document.getElementById("theme-toggle");
   const themeLabel = document.getElementById("theme-label");
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Initialize theme on load from storage
+  if (currentTheme === "light") {
+    body.classList.add("light-theme");
+    body.classList.remove("dark-theme");
+    if (themeLabel) themeLabel.textContent = "LIGHT";
+  } else {
+    body.classList.add("dark-theme");
+    body.classList.remove("light-theme");
+    if (themeLabel) themeLabel.textContent = "DARK";
+  }
 
   /* =================================================================
      2. THEME SWITCHER
@@ -17,13 +28,15 @@ document.addEventListener("DOMContentLoaded", () => {
       currentTheme = "light";
       body.classList.add("light-theme");
       body.classList.remove("dark-theme");
-      themeLabel.textContent = "LIGHT";
+      if (themeLabel) themeLabel.textContent = "LIGHT";
+      localStorage.setItem("ultron-theme", "light");
       logToTerminal(">> SYSTEM THEME SET TO LIGHT MODE // HIGH CONTRAST ACTIVE.");
     } else {
       currentTheme = "dark";
       body.classList.add("dark-theme");
       body.classList.remove("light-theme");
-      themeLabel.textContent = "DARK";
+      if (themeLabel) themeLabel.textContent = "DARK";
+      localStorage.setItem("ultron-theme", "dark");
       logToTerminal(">> SYSTEM THEME SET TO DARK MODE // BLUEPRINT NAVY ACTIVE.");
     }
   }
