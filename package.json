@@ -1,0 +1,16 @@
+{
+  "name": "ultron-systems",
+  "version": "4.12.0",
+  "description": "Autonomous System Orchestration & Swarm Intelligence Website",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true
+}
