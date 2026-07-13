@@ -13,6 +13,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 
+  <!-- Blocking Auth Redirect -->
+  <script>
+    if (localStorage.getItem('ultron-auth-token')) {
+      window.location.href = '/';
+    }
+  </script>
+
   <style>
     /* -------------------------------------------------------------
        1. THEME VARIABLES & BASICS
@@ -660,10 +667,20 @@
           btnSubmit.disabled = true;
 
           setTimeout(() => {
+            if (nodeKey !== "ULTRON" || authToken !== "ULTRON@123") {
+              logRelay("ERR: CREDENTIALS MISMATCH. SECURITY HANDSHAKE ABORTED.", "warn-log");
+              btnSubmit.disabled = false;
+              return;
+            }
+
             logRelay("HANDSHAKE EXCHANGED. COMPILING KEY MATCH...", "info-log");
 
             setTimeout(() => {
               logRelay("SUCCESS: AUTH VECTOR APPROVED. ESTABLISHING CONSOLE UPLINK...", "success-log");
+              
+              // Store session tokens
+              localStorage.setItem("ultron-auth-token", "SECURE-NODE-KEY-ACTIVE");
+              localStorage.setItem("ultron-username", nodeKey);
               
               setTimeout(() => {
                 logRelay("Mesh socket connected. Transferring...", "success-log");

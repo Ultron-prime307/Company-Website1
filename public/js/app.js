@@ -273,6 +273,13 @@ document.addEventListener("DOMContentLoaded", () => {
   logToTerminal("====================================================", "cmd-output");
   logIntervalTimer = setInterval(generateIdleLog, 4000);
 
+  // Set terminal operator prompt text dynamically
+  const operatorUsername = localStorage.getItem("ultron-username") || "operator";
+  const consolePromptEl = document.getElementById("console-operator-prompt");
+  if (consolePromptEl) {
+    consolePromptEl.textContent = `${operatorUsername.toLowerCase()}@ultron:~$`;
+  }
+
   if (terminalInput) {
     terminalInput.addEventListener("focus", () => {
       resetIdleTimer();
@@ -288,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (cmdText === "") return;
 
         // Print entered command
-        logToTerminal(`guest@ultron:~$ ${cmdText}`, "cmd-input");
+        logToTerminal(`${operatorUsername.toLowerCase()}@ultron:~$ ${cmdText}`, "cmd-input");
 
         // Parse command
         const args = cmdText.split(" ");
@@ -738,13 +745,13 @@ document.addEventListener("DOMContentLoaded", () => {
   updatePulsesQuantity();
   animate();
 
-  // Initialize Swarm Diagnostics canvas animations
-  initSwarmDiagnostics();
-
   /* =================================================================
      12. SWARM DIAGNOSTICS & SCIENTIFIC ANIMATIONS
      ================================================================= */
   let oscilloscopeBurst = 1.0;
+
+  // Initialize Swarm Diagnostics canvas animations
+  initSwarmDiagnostics();
 
   function initSwarmDiagnostics() {
     // -------------------------------------------------------------
@@ -991,6 +998,19 @@ document.addEventListener("DOMContentLoaded", () => {
       setInterval(updateMatrix, 800);
       updateMatrix();
     }
+  }
+
+  /* =================================================================
+     13. LOGOUT / DISCONNECT NODE HANDLER
+     ================================================================= */
+  const navLogoutBtn = document.getElementById("nav-logout-btn");
+  if (navLogoutBtn) {
+    navLogoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("ultron-auth-token");
+      localStorage.removeItem("ultron-username");
+      window.location.href = "/login";
+    });
   }
 
 });
