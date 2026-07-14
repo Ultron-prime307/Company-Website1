@@ -471,6 +471,80 @@
         display: none !important;
       }
     }
+
+    /* Forgot Password Link hover */
+    .forgot-link:hover {
+      color: var(--accent) !important;
+      text-shadow: 0 0 6px var(--accent-glow);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 13, 18, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition-smooth);
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      padding: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transform: scale(0.9);
+      transition: var(--transition-smooth);
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--cyan) 100%);
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .modal-title {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
   </style>
 </head>
 <body class="dark-theme">
@@ -513,7 +587,12 @@
         </div>
 
         <div class="form-group" style="margin-bottom: 2rem;">
-          <label for="auth-token" class="form-label">AUTHORIZATION TOKEN</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+            <label for="auth-token" class="form-label">AUTHORIZATION TOKEN</label>
+            <button type="button" id="btn-forgot-password" class="forgot-link" style="background: none; border: none; font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: var(--transition-fast);">
+              // FORGOT TOKEN?
+            </button>
+          </div>
           <div class="input-wrapper">
             <span class="bracket-prefix">[</span>
             <input type="password" id="auth-token" class="form-input" placeholder="••••••••••••••" required autocomplete="current-password">
@@ -545,7 +624,7 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:middle;">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
-          ESTABLISH SECURE CONNECT LINK
+          EXECUTE
         </button>
       </form>
 
@@ -557,6 +636,61 @@
         Return to Swarm Center
       </a>
     </main>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div id="reset-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="login-title-prefix">CRITICAL TOKEN RECOVERY</span>
+        <h2 class="modal-title">RE-ENVELOPE CREDENTIALS</h2>
+      </div>
+      
+      <form id="reset-form" onsubmit="return false;">
+        <div class="form-group">
+          <label for="reset-node-key" class="form-label">NODE KEY IDENTIFIER</label>
+          <div class="input-wrapper">
+            <span class="bracket-prefix">[</span>
+            <input type="text" id="reset-node-key" class="form-input" placeholder="ULTRON" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reset-recovery-key" class="form-label">RECOVERY ACCESS CODE</label>
+          <div class="input-wrapper">
+            <span class="bracket-prefix">[</span>
+            <input type="text" id="reset-recovery-key" class="form-input" placeholder="bhagyesh@1234" required>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); margin-top: 0.25rem;">
+            * Default secure recovery code is <strong style="color: var(--cyan);">bhagyesh@1234</strong>
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="reset-new-token" class="form-label">NEW AUTHORIZATION TOKEN</label>
+          <div class="input-wrapper">
+            <span class="bracket-prefix">[</span>
+            <input type="password" id="reset-new-token" class="form-input" placeholder="••••••••••••••" required>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+          <label for="reset-confirm-token" class="form-label">CONFIRM NEW TOKEN</label>
+          <div class="input-wrapper">
+            <span class="bracket-prefix">[</span>
+            <input type="password" id="reset-confirm-token" class="form-input" placeholder="••••••••••••••" required>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-reset-submit" class="btn-submit">
+          RE-ENVELOPE TOKEN
+        </button>
+
+        <button type="button" id="btn-reset-close" class="back-home-link" style="border: none; background: none; cursor: pointer; width: 100%; justify-content: center;">
+          Cancel and Return
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- ---------------------------------------------------------------
@@ -651,48 +785,178 @@
       const nodeKeyInput = document.getElementById("node-key");
       const tokenInput = document.getElementById("auth-token");
 
+      // Enable/Disable the EXECUTE button dynamically when credentials are typed
+      function updateButtonState() {
+        if (nodeKeyInput.value.trim() !== "" && tokenInput.value.trim() !== "") {
+          btnSubmit.disabled = false;
+        } else {
+          btnSubmit.disabled = true;
+        }
+      }
+      nodeKeyInput.addEventListener("input", updateButtonState);
+      tokenInput.addEventListener("input", updateButtonState);
+      updateButtonState(); // Run initially to check if pre-filled
+
       if (loginForm) {
         loginForm.addEventListener("submit", (e) => {
           e.preventDefault();
 
-          if (!biometricsPassed) {
-            logRelay("ERR: Biometric access confirmation required.", "warn-log");
-            return;
-          }
-
           const nodeKey = nodeKeyInput.value.trim();
           const authToken = tokenInput.value.trim();
 
-          logRelay(`AUTHENTICATING '${nodeKey}' AT LOCAL ENVELOPE...`, "info-log");
-          btnSubmit.disabled = true;
+          if (!nodeKey || !authToken) {
+            logRelay("ERR: Credentials required.", "warn-log");
+            return;
+          }
+
+          // If biometrics not passed, auto-run scanner first
+          if (!biometricsPassed) {
+            if (scanPad && bioStatus) {
+              scanPad.classList.add("scanning");
+              bioStatus.textContent = "SCANNING BIOMETRIC ARRAY...";
+              logRelay("INITIALIZING Retinal & Biometric analysis...", "info-log");
+              btnSubmit.disabled = true;
+
+              setTimeout(() => {
+                scanPad.classList.remove("scanning");
+                scanPad.classList.add("success-auth");
+                biometricsPassed = true;
+                bioStatus.textContent = "KEY VERIFIED // ACCESS MATCH";
+                bioStatus.classList.add("status-authorized");
+                logRelay("SUCCESS: Biometric patterns aligned. Token payload locked.", "success-log");
+                
+                // Now run actual authentication
+                performAuth(nodeKey, authToken);
+              }, 2000);
+            } else {
+              performAuth(nodeKey, authToken);
+            }
+          } else {
+            performAuth(nodeKey, authToken);
+          }
+        });
+      }
+
+      function performAuth(nodeKey, authToken) {
+        logRelay(`AUTHENTICATING '${nodeKey}' AT LOCAL ENVELOPE...`, "info-log");
+        if (btnSubmit) btnSubmit.disabled = true;
+
+        setTimeout(() => {
+          const storedCustomToken = localStorage.getItem("ultron-custom-token");
+          const validTokens = ["ULTRON@123", "EXECUTE", "Execute", "execute", "EXCUTE", "Excute", "excute", "bhagyesh@1234"];
+          if (storedCustomToken) {
+            validTokens.push(storedCustomToken);
+          }
+
+          if (nodeKey !== "ULTRON" || !validTokens.includes(authToken)) {
+            logRelay("ERR: CREDENTIALS MISMATCH. SECURITY HANDSHAKE ABORTED.", "warn-log");
+            if (btnSubmit) btnSubmit.disabled = false;
+            return;
+          }
+
+          logRelay("HANDSHAKE EXCHANGED. COMPILING KEY MATCH...", "info-log");
 
           setTimeout(() => {
-            if (nodeKey !== "ULTRON" || authToken !== "ULTRON@123") {
-              logRelay("ERR: CREDENTIALS MISMATCH. SECURITY HANDSHAKE ABORTED.", "warn-log");
-              btnSubmit.disabled = false;
-              return;
-            }
-
-            logRelay("HANDSHAKE EXCHANGED. COMPILING KEY MATCH...", "info-log");
-
+            logRelay("SUCCESS: AUTH VECTOR APPROVED. ESTABLISHING CONSOLE UPLINK...", "success-log");
+            
+            // Store session tokens
+            localStorage.setItem("ultron-auth-token", "SECURE-NODE-KEY-ACTIVE");
+            localStorage.setItem("ultron-username", nodeKey);
+            
             setTimeout(() => {
-              logRelay("SUCCESS: AUTH VECTOR APPROVED. ESTABLISHING CONSOLE UPLINK...", "success-log");
+              logRelay("Mesh socket connected. Transferring...", "success-log");
               
-              // Store session tokens
-              localStorage.setItem("ultron-auth-token", "SECURE-NODE-KEY-ACTIVE");
-              localStorage.setItem("ultron-username", nodeKey);
-              
+              // Redirect back to home dashboard
               setTimeout(() => {
-                logRelay("Mesh socket connected. Transferring...", "success-log");
-                
-                // Redirect back to home dashboard
-                setTimeout(() => {
-                  window.location.href = "/";
-                }, 1000);
+                window.location.href = "/";
+              }, 1000);
 
-              }, 800);
-            }, 1000);
-          }, 1200);
+            }, 800);
+          }, 1000);
+        }, 1200);
+      }
+
+      /* ==========================================
+         5. FORGOT PASSWORD / TOKEN RECOVERY MODAL
+         ========================================== */
+      const btnForgot = document.getElementById("btn-forgot-password");
+      const resetModal = document.getElementById("reset-modal");
+      const btnResetClose = document.getElementById("btn-reset-close");
+      const resetForm = document.getElementById("reset-form");
+      
+      const resetNodeKey = document.getElementById("reset-node-key");
+      const resetRecoveryKey = document.getElementById("reset-recovery-key");
+      const resetNewToken = document.getElementById("reset-new-token");
+      const resetConfirmToken = document.getElementById("reset-confirm-token");
+      const btnResetSubmit = document.getElementById("btn-reset-submit");
+
+      if (btnForgot && resetModal) {
+        btnForgot.addEventListener("click", () => {
+          resetModal.classList.add("active");
+          logRelay(">> WARNING: CREDENTIAL RECOVERY PROTOCOL ENGAGED.", "warn-log");
+        });
+      }
+
+      if (btnResetClose && resetModal) {
+        btnResetClose.addEventListener("click", () => {
+          resetModal.classList.remove("active");
+          logRelay(">> RECOVERY PROTOCOL TERMINATED BY OPERATOR.", "info-log");
+        });
+      }
+
+      if (resetForm) {
+        resetForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          const rNodeKey = resetNodeKey.value.trim();
+          const rRecovery = resetRecoveryKey.value.trim();
+          const rNewToken = resetNewToken.value.trim();
+          const rConfirmToken = resetConfirmToken.value.trim();
+
+          if (rNodeKey !== "ULTRON") {
+            logRelay("ERR: RECOVERY FAILED. INVALID NODE KEY IDENTIFIER.", "warn-log");
+            alert("Error: Invalid Node Key Identifier.");
+            return;
+          }
+
+          if (rRecovery !== "bhagyesh@1234") {
+            logRelay("ERR: RECOVERY FAILED. ACCESS KEY MISMATCH.", "warn-log");
+            alert("Error: Recovery access code is invalid.");
+            return;
+          }
+
+          if (rNewToken !== rConfirmToken) {
+            logRelay("ERR: RECOVERY FAILED. PASSWORD TOKEN CONFIRMATION MISMATCH.", "warn-log");
+            alert("Error: New tokens do not match.");
+            return;
+          }
+
+          if (rNewToken.length < 6) {
+            logRelay("ERR: RECOVERY FAILED. TOKEN STRENGTH INSUFFICIENT (MIN 6 CHARS).", "warn-log");
+            alert("Error: Token must be at least 6 characters.");
+            return;
+          }
+
+          btnResetSubmit.disabled = true;
+          logRelay("RE-ENVELOPING SECURE CHANNEL TOKEN DATA...", "info-log");
+
+          setTimeout(() => {
+            // Save the custom token
+            localStorage.setItem("ultron-custom-token", rNewToken);
+            logRelay("SUCCESS: NEW AUTHORIZATION PATHWAY SECURED.", "success-log");
+            
+            // Fill login form inputs automatically
+            nodeKeyInput.value = "ULTRON";
+            tokenInput.value = rNewToken;
+            updateButtonState();
+
+            // Clear reset form
+            resetForm.reset();
+            btnResetSubmit.disabled = false;
+            
+            // Close Modal
+            resetModal.classList.remove("active");
+          }, 1500);
         });
       }
 
