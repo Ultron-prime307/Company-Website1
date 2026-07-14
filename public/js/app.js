@@ -1013,4 +1013,94 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  /* =================================================================
+     14. SWARM PLATFORMS CAROUSEL CONTROLLER
+     ================================================================= */
+  const track = document.getElementById("carousel-track");
+  const slides = track ? Array.from(track.children) : [];
+  const nextButton = document.getElementById("carousel-next");
+  const prevButton = document.getElementById("carousel-prev");
+  const dotsNav = document.getElementById("carousel-dots");
+  const dots = dotsNav ? Array.from(dotsNav.children) : [];
+
+  let currentSlideIndex = 0;
+  let autoPlayTimer = null;
+
+  function moveToSlide(targetIndex) {
+    if (slides.length === 0) return;
+
+    // Boundary check
+    if (targetIndex < 0) targetIndex = slides.length - 1;
+    if (targetIndex >= slides.length) targetIndex = 0;
+
+    // Update slides visibility classes
+    slides[currentSlideIndex].classList.remove("active-slide");
+    slides[targetIndex].classList.add("active-slide");
+
+    // Update dots classes
+    if (dots.length > 0) {
+      dots[currentSlideIndex].classList.remove("active-dot");
+      dots[targetIndex].classList.add("active-dot");
+    }
+
+    currentSlideIndex = targetIndex;
+  }
+
+  // Next button click listener
+  if (nextButton) {
+    nextButton.addEventListener("click", () => {
+      moveToSlide(currentSlideIndex + 1);
+      resetAutoPlay();
+    });
+  }
+
+  // Prev button click listener
+  if (prevButton) {
+    prevButton.addEventListener("click", () => {
+      moveToSlide(currentSlideIndex - 1);
+      resetAutoPlay();
+    });
+  }
+
+  // Dots click listener
+  if (dotsNav) {
+    dotsNav.addEventListener("click", e => {
+      const targetDot = e.target.closest("button");
+      if (!targetDot) return;
+
+      const targetIndex = dots.indexOf(targetDot);
+      if (targetIndex !== -1) {
+        moveToSlide(targetIndex);
+        resetAutoPlay();
+      }
+    });
+  }
+
+  // AutoPlay logic
+  function startAutoPlay() {
+    if (prefersReducedMotion) return;
+    autoPlayTimer = setInterval(() => {
+      moveToSlide(currentSlideIndex + 1);
+    }, 6000);
+  }
+
+  function resetAutoPlay() {
+    clearInterval(autoPlayTimer);
+    startAutoPlay();
+  }
+
+  // Pause on hover
+  if (track) {
+    track.addEventListener("mouseenter", () => {
+      clearInterval(autoPlayTimer);
+    });
+    track.addEventListener("mouseleave", () => {
+      startAutoPlay();
+    });
+  }
+
+  // Initialize AutoPlay
+  startAutoPlay();
+
 });
+

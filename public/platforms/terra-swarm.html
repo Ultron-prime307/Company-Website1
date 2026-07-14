@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ULTRON // Terra Swarm Specification</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Secure Session Gate -->
+  <script>
+    if (!localStorage.getItem('ultron-auth-token')) {
+      window.location.href = '/login';
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg: #0A0D12;
+      --panel: #12161D;
+      --panel-2: #171D26;
+      --line: #232B37;
+      --line-bright: #384556;
+      --text: #E7EAEE;
+      --muted: #8993A1;
+      --accent: #FF6A39;
+      --accent-glow: rgba(255, 106, 57, 0.15);
+      --cyan: #4FD1C5;
+      --cyan-glow: rgba(79, 209, 197, 0.2);
+      
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-fast: all 0.2s ease;
+    }
+
+    body.light-theme {
+      --bg: #F4F6F9;
+      --panel: #FFFFFF;
+      --panel-2: #EDF1F6;
+      --line: #D0D7DE;
+      --line-bright: #AFB8C1;
+      --text: #0F141C;
+      --muted: #57606A;
+      --accent: #FF5A23;
+      --accent-glow: rgba(255, 90, 35, 0.12);
+      --cyan: #14B8A6;
+      --cyan-glow: rgba(20, 184, 166, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 50% 10%, var(--cyan-glow) 0%, transparent 60%),
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 100% 100%, 50px 50px, 50px 50px;
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    header.nav-header {
+      width: 100%;
+      height: 80px;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      background: rgba(10, 13, 18, 0.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .logo svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--accent);
+    }
+
+    .logo-text span {
+      color: var(--cyan);
+    }
+
+    .theme-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--cyan);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    main {
+      flex-grow: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    .breadcrumb {
+      display: flex;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .breadcrumb a {
+      color: var(--cyan);
+      text-decoration: none;
+      transition: var(--transition-fast);
+    }
+
+    .breadcrumb a:hover {
+      color: var(--text);
+    }
+
+    .spec-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .spec-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
+    }
+
+    /* Left Side: Overview & Description */
+    .overview-column {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .overview-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .spec-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--cyan);
+      letter-spacing: 0.1em;
+    }
+
+    .spec-title {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--cyan);
+      background: rgba(79, 209, 197, 0.1);
+      border: 1px solid var(--cyan);
+      padding: 0.3rem 0.8rem;
+      border-radius: 4px;
+      align-self: flex-start;
+      margin-top: 0.5rem;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+    }
+
+    .overview-text {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      text-transform: uppercase;
+      margin-top: 1rem;
+      color: var(--text);
+      border-left: 3px solid var(--accent);
+      padding-left: 0.75rem;
+    }
+
+    /* Visual Box */
+    .visual-box {
+      position: relative;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 16/10;
+      margin-top: 1rem;
+    }
+
+    .visual-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.9;
+    }
+
+    .corner-border {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: var(--cyan);
+      border-style: solid;
+      pointer-events: none;
+    }
+
+    .c-tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+    .c-tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+    .c-bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+    .c-br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+    .scan-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: scanline 4s infinite linear;
+    }
+
+    @keyframes scanline {
+      0% { top: 0%; }
+      100% { top: 100%; }
+    }
+
+    /* Right Side: Specifications Table */
+    .specs-column {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .specs-header {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 0.75rem;
+    }
+
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    .spec-table tr {
+      border-bottom: 1px solid rgba(35, 43, 55, 0.5);
+    }
+
+    .spec-table tr:last-child {
+      border-bottom: none;
+    }
+
+    .spec-table td {
+      padding: 1rem 0.5rem;
+      vertical-align: top;
+    }
+
+    .spec-label {
+      color: var(--muted);
+      width: 40%;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    .spec-val {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--line);
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      align-self: flex-start;
+      margin-top: 1rem;
+      transition: var(--transition-fast);
+    }
+
+    .btn-back:hover {
+      border-color: var(--cyan);
+      color: var(--text);
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+  </style>
+</head>
+<body class="dark-theme">
+
+  <!-- Header -->
+  <header class="nav-header">
+    <a href="/" class="logo" aria-label="Ultron Autonomous Systems Home">
+      <svg viewBox="0 0 24 24">
+        <polygon points="12,2 22,7 22,17 12,22 2,17 2,7" fill="none" stroke="currentColor" stroke-width="2" />
+        <polygon points="12,6 18,9 18,15 12,18 6,15 6,9" fill="currentColor" opacity="0.8" />
+      </svg>
+      <span class="logo-text">ULTRON<span>.</span></span>
+    </a>
+    
+    <button id="theme-toggle" class="theme-toggle-btn">
+      [ SYSTEM: <span id="theme-label">DARK</span> ]
+    </button>
+  </header>
+
+  <!-- Main Specs Layout -->
+  <main>
+    <div class="breadcrumb">
+      <a href="/">Dashboard</a> &gt; <a href="/#platforms">Platforms</a> &gt; <span>Terra Swarm Specification</span>
+    </div>
+
+    <div class="spec-grid">
+      <!-- Description & Image Overview -->
+      <div class="overview-column">
+        <div class="overview-header">
+          <span class="spec-tag">UNIT_ID: TERRA-SWARM-v5</span>
+          <h1 class="spec-title">Terra Swarm Core</h1>
+          <div class="status-badge">
+            <span class="status-dot"></span>
+            SWARM TELEMETRY OPERATIONAL
+          </div>
+        </div>
+
+        <p class="overview-text">
+          Terra Swarm Core is a high-torque, four-wheeled autonomous ground patrol rover platform designed for industrial facility monitoring and continuous perimeter patrols.
+        </p>
+
+        <h2 class="section-title">SLAM Navigation & Obstacle Avoidance</h2>
+        <p class="overview-text">
+          Operating with full onboard SLAM spatial mapping algorithms, Terra rovers construct high-fidelity local grid structures, navigating complex warehouse corridors and outdoor gravel perimeters. Integrated infrared and green lidar scanners map path hazards in real-time, communicating fleet layouts directly across local mesh nodes.
+        </p>
+
+        <div class="visual-box">
+          <div class="corner-border c-tl"></div>
+          <div class="corner-border c-tr"></div>
+          <div class="corner-border c-bl"></div>
+          <div class="corner-border c-br"></div>
+          <div class="scan-overlay"></div>
+          <img src="../images/terra-swarm.png" alt="Terra Swarm Rover Visualizer">
+        </div>
+      </div>
+
+      <!-- Specs Sheet Table -->
+      <div class="specs-column">
+        <h2 class="specs-header">Tactical Blueprints</h2>
+        
+        <table class="spec-table">
+          <tr>
+            <td class="spec-label">Chassis Design</td>
+            <td class="spec-val">All-Terrain 4WD Rover</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Dimensions</td>
+            <td class="spec-val">980mm x 650mm x 520mm</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Payload Capacity</td>
+            <td class="spec-val">80 kg Patrol Equipment</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Firmware Engine</td>
+            <td class="spec-val">Ultron EdgeCore-v5 RTOS</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Comms Topology</td>
+            <td class="spec-val">Dynamic 2.4/5.8 GHz Mesh</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Primary Sensors</td>
+            <td class="spec-val">3D Green Lidar + Active Infrared + Mic</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Protection Rating</td>
+            <td class="spec-val">IP66 Dust & Water Resistant</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Energy Capacity</td>
+            <td class="spec-val">33,000 mAh LiFePO4 Cell pack</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Flight Autonomy</td>
+            <td class="spec-val">8 Hours continuous operation</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Fail-Safe Routines</td>
+            <td class="spec-val">Auto-Recharge Dock, Emergency Stop, Object Audio Alert</td>
+          </tr>
+          <tr>
+            <td class="spec-label">Max Swarm Density</td>
+            <td class="spec-val">24 Ground Nodes / Cluster</td>
+          </tr>
+        </table>
+
+        <a href="/#platforms" class="btn-back">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" style="transform: rotate(180deg); display:inline-block; vertical-align:middle; margin-right:4px;">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+          Swarm Center
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Persistent Theme control
+    document.addEventListener("DOMContentLoaded", () => {
+      let activeTheme = localStorage.getItem("ultron-theme") || "dark";
+      const themeToggleBtn = document.getElementById("theme-toggle");
+      const themeLabel = document.getElementById("theme-label");
+
+      function applyTheme(theme) {
+        if (theme === "light") {
+          document.body.className = "light-theme";
+          if (themeLabel) themeLabel.textContent = "LIGHT";
+        } else {
+          document.body.className = "dark-theme";
+          if (themeLabel) themeLabel.textContent = "DARK";
+        }
+      }
+      applyTheme(activeTheme);
+
+      if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", () => {
+          activeTheme = activeTheme === "dark" ? "light" : "dark";
+          localStorage.setItem("ultron-theme", activeTheme);
+          applyTheme(activeTheme);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
